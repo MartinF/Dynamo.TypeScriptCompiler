@@ -2,9 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 
-// Make a SaveToDisk option so it will output next to the source instead of using the Temp folder and deleting the files
-// If not saving to disk creating a source map option should not be available as it depends on the file name?
-
 namespace Dynamo.TypeScriptCompiler
 {
 	public class TypeScriptCompiler : ITypeScriptCompiler
@@ -25,7 +22,7 @@ namespace Dynamo.TypeScriptCompiler
 	    public TypeScriptCompilerOptions Options { get; private set; }
 
         // Methods
-		public TypeScriptCompilerResult Compile(string filePath)
+		public ITypeScriptCompilerResult Compile(string filePath)
 		{
 			if (filePath == null)
 				throw new ArgumentNullException("filePath");
@@ -33,17 +30,24 @@ namespace Dynamo.TypeScriptCompiler
 			if (!File.Exists(filePath))
 				throw new ArgumentException("File does not exist", "filePath");
 
-			var result = new TypeScriptCompilerResult();
+			var fileName = Path.GetFileName(filePath);
+		    var outputSourceFileName = Path.ChangeExtension(fileName, ".js");
+			var outputFolder = Options.SaveToDisk ? Path.GetDirectoryName(filePath) : Path.GetTempPath().TrimEnd(new[] { '\\' });
+			
+			if (Options.GenerateSourceMap && !Options.SaveToDisk)
+			{
+				// Files need to be saved to the same folder when a sourcemap is genereated (because of the reference to the source)
+				// Easiest way to solve it is to output to either the folder of the target file or copy the target file to the temp folder
 
-            var tempFolder = Path.GetTempPath().TrimEnd(new[] { '\\' });
-		    var fileName = Path.GetFileName(filePath);
-		    var newFileName = Path.ChangeExtension(fileName, ".js");
-		    var newFilePath = Path.Combine(tempFolder, newFileName);
+				var newFilePath = Path.Combine(outputFolder, fileName);
+				File.Copy(filePath, newFilePath);
+				filePath = newFilePath;
+			}
 
-			// Create the Arguments
-		    var args = "\"" + filePath + "\"";
-		    args += " --outDir \"" + tempFolder + "\"";
-			args += GenerateArgumentsFromOptions();
+			String outputSourcePath = Path.Combine(outputFolder, outputSourceFileName);
+			String outputSourceMapPath = outputSourcePath + ".map";
+
+			var args = GetArguments(filePath, outputFolder);
 
 			var processStartInfo = new ProcessStartInfo
 			{
@@ -62,57 +66,60 @@ namespace Dynamo.TypeScriptCompiler
                 process.Start();
 
 				// Wait until compiling has finished
-                if (process.WaitForExit(_timeout))
-                {
-                    // Exited
+			    if (!process.WaitForExit(_timeout) || process.ExitCode != 0)
+			    {
+					// Time-out or ExitCode not 0
 
-	                if (process.ExitCode == 0)
-	                {
-						// Read temporary generated file
-						result.CompiledSource = File.ReadAllText(newFilePath);
-						// Delete the temporary file (else it wouldnt be temporary)
-						File.Delete(newFilePath);
+					// TODO: Add error to result
+					return new TypeScriptCompilerResult(process.ExitCode);
+			    }
 
-						//if (Options.GenerateSourceMap)
-						//{
-						//	var sourceMapPath = newFilePath + ".map";
-							
-						//	// Read temporary source map
-						//	result.SourceMap = File.ReadAllText(sourceMapPath);
-						//	// Delete temporary source map
-						//	File.Delete(sourceMapPath);
-						//}
-	                }
-	                else
-	                {
-		                // TODO: Get error and add it to the result or throw exception ?
-	                }
-                }
-                else
-                {
-                    // Timeout
-					
-                    // TODO: How to handle this? throw new TypeScriptCompilerException("Compiling timed out!"); ?
-                }
+			    if (Options.SaveToDisk)
+			    {
+				    
+					var sourceFactory = new Func<String>(() => File.ReadAllText(outputSourcePath));
+				    Func<String> sourceMapFactory = null;
 
-				result.ExitCode = process.ExitCode;
+				    if (Options.GenerateSourceMap)
+						sourceMapFactory = () => File.ReadAllText(outputSourceMapPath);
+				
+				    return new TypeScriptCompilerResult(process.ExitCode, sourceFactory, sourceMapFactory);
+			    }
+			    else
+			    {
+					// Read temporary file
+				    var source = File.ReadAllText(outputSourcePath);
+
+					// Delete temporary file (else it wouldnt be temporary)
+				    File.Delete(outputSourcePath);
+
+				    String sourceMap = null;
+
+				    if (Options.GenerateSourceMap)
+				    {
+						sourceMap = File.ReadAllText(outputSourceMapPath);
+						File.Delete(outputSourceMapPath);
+						// Also delete the filePath as it is temporary - needed to fix the reference in the sourcemap
+					    File.Delete(filePath);
+				    }
+
+				    return new TypeScriptCompilerResult(process.ExitCode, source, sourceMap);
+			    }
 		    }
-
-			return result;
 		}
 
-		private String GenerateArgumentsFromOptions()
+		private String GetArguments(String filePath, String outputFolder)
 		{
-			var args = " --target " + Options.Target.ToString();
-			
+			var args = "\"" + filePath + "\" --outDir \"" + outputFolder + "\" --target " + Options.Target;
+	
 			if (Options.AllowBool)
 				args += " --allowBool";
 
 			if (Options.RemoveComments)
 				args += " --removeComments";
 
-			//if (Options.GenerateSourceMap)
-			//	args += " --sourcemap";
+			if (Options.GenerateSourceMap)
+				args += " --sourcemap";
 
 			return args;
 		}

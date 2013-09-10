@@ -4,6 +4,6 @@ namespace Dynamo.TypeScriptCompiler
 {
 	public interface ITypeScriptCompiler
 	{
-		TypeScriptCompilerResult Compile(String filePath);
+		ITypeScriptCompilerResult Compile(String filePath);
 	}
 }
