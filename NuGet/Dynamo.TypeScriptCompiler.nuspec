@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Dynamo.TypeScriptCompiler</id>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
         <title>Dynamo.TypeScriptCompiler</title>
         <authors>Dynamo</authors>
         <projectUrl>https://github.com/MartinF/Dynamo.TypeScriptCompiler</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>A .Net wrapper for the TypeScript Compiler.</description>
         <summary>A .Net wrapper for the TypeScript Compiler.</summary>
-        <tags>TypeScript Compiler .Net Wrapper</tags>
+        <tags>TypeScript Compiler Wrapper</tags>
     </metadata>
     <files>
         <file src="..\Dynamo.TypeScriptCompiler\bin\Release\Dynamo.TypeScriptCompiler.dll" target="lib\Dynamo.TypeScriptCompiler.dll" />

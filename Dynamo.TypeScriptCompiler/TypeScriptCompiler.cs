@@ -69,9 +69,7 @@ namespace Dynamo.TypeScriptCompiler
 			    if (!process.WaitForExit(_timeout) || process.ExitCode != 0)
 			    {
 					// Time-out or ExitCode not 0
-
-					// TODO: Add error to result
-					return new TypeScriptCompilerResult(process.ExitCode);
+					return new TypeScriptCompilerResult(process.ExitCode, error: process.StandardError.ReadToEnd());
 			    }
 
 			    if (Options.SaveToDisk)

@@ -2,7 +2,6 @@
 
 // Could split it into TypeScriptCompilerFileResult and TypeScriptCompilerSourceResult
 // Add sourceFilePath/Name and sourceMapFilePath/Name
-// Error
 
 namespace Dynamo.TypeScriptCompiler
 {
@@ -15,22 +14,25 @@ namespace Dynamo.TypeScriptCompiler
 		private readonly Func<String> _sourceMapFactory;
 
 		// Constructors
-		public TypeScriptCompilerResult(int exitCode, String source = null, String sourceMap = null)
+		public TypeScriptCompilerResult(int exitCode, String source = null, String sourceMap = null, String error = null)
 		{
 			ExitCode = exitCode;
 			_source = source;
 			_sourceMap = sourceMap;
+			Error = error;
 		}
 
-		public TypeScriptCompilerResult(int exitCode, Func<String> sourceFactory, Func<String> sourceMapFactory = null)
+		public TypeScriptCompilerResult(int exitCode, Func<String> sourceFactory, Func<String> sourceMapFactory = null, String error = null)
+			: this(exitCode, (String) null, (String) null, error)
 		{
-			ExitCode = exitCode;
 			_sourceFactory = sourceFactory;
 			_sourceMapFactory = sourceMapFactory;
 		}
 
 		// Properties
 		public int ExitCode { get; private set; }
+		public String Error { get; private set; }
+		public Boolean HasError { get { return Error != null; } }
 
 		public String Source
 		{

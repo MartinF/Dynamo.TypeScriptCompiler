@@ -61,6 +61,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Scripts\error.ts" />
     <Content Include="Scripts\simple.ts" />
   </ItemGroup>
   <Choose>
