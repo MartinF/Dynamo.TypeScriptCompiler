@@ -108,7 +108,7 @@ namespace Dynamo.TypeScriptCompiler
 
 		private String GetArguments(String filePath, String outputFolder)
 		{
-			var args = "\"" + filePath + "\" --outDir \"" + outputFolder + "\" --target " + Options.CompilerTarget;
+			var args = "\"" + filePath + "\" --outDir \"" + outputFolder + "\" --target " + Options.Target;
 	
 			if (Options.AllowBool)
 				args += " --allowBool";
