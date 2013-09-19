@@ -7,17 +7,17 @@ namespace Dynamo.TypeScriptCompiler
 	    public TypeScriptCompilerOptions()
 	    {
 			// Defaults
-		    Target = Target.ES3;
+		    CompilerTarget = TypeScriptCompilerTarget.ES3;
 		    AllowBool = false;
 		    RemoveComments = false;
-			GenerateSourceMap = false;
+			SourceMap = false;
 		    SaveToDisk = true;
 	    }
 
-	    public Target Target { get; set; }
+	    public TypeScriptCompilerTarget CompilerTarget { get; set; }
 	    public Boolean AllowBool { get; set; }
 	    public Boolean RemoveComments { get; set; }
-	    public Boolean GenerateSourceMap { get; set; }
+	    public Boolean SourceMap { get; set; }
 	    public Boolean SaveToDisk { get; set; }
 	}
 }

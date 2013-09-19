@@ -41,7 +41,7 @@
   <ItemGroup>
     <Compile Include="ITypeScriptCompiler.cs" />
     <Compile Include="ITypeScriptCompilerResult.cs" />
-    <Compile Include="Target.cs" />
+    <Compile Include="TypeScriptCompilerTarget.cs" />
     <Compile Include="TypeScriptCompiler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TypeScriptCompilerException.cs" />

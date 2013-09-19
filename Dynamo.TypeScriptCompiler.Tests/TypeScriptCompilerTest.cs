@@ -34,7 +34,7 @@ namespace Dynamo.TypeScriptCompiler.Tests
 			var options = new TypeScriptCompilerOptions()
 			{
 				SaveToDisk = false,
-				GenerateSourceMap = true
+				SourceMap = true
 			};
 
 			var compiler = new TypeScriptCompiler(options);

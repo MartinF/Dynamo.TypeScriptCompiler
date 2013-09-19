@@ -34,7 +34,7 @@ namespace Dynamo.TypeScriptCompiler
 		    var outputSourceFileName = Path.ChangeExtension(fileName, ".js");
 			var outputFolder = Options.SaveToDisk ? Path.GetDirectoryName(filePath) : Path.GetTempPath().TrimEnd(new[] { '\\' });
 			
-			if (Options.GenerateSourceMap && !Options.SaveToDisk)
+			if (Options.SourceMap && !Options.SaveToDisk)
 			{
 				// Files need to be saved to the same folder when a sourcemap is genereated (because of the reference to the source)
 				// Easiest way to solve it is to output to either the folder of the target file or copy the target file to the temp folder
@@ -78,7 +78,7 @@ namespace Dynamo.TypeScriptCompiler
 					var sourceFactory = new Func<String>(() => File.ReadAllText(outputSourcePath));
 				    Func<String> sourceMapFactory = null;
 
-				    if (Options.GenerateSourceMap)
+				    if (Options.SourceMap)
 						sourceMapFactory = () => File.ReadAllText(outputSourceMapPath);
 				
 				    return new TypeScriptCompilerResult(process.ExitCode, sourceFactory, sourceMapFactory);
@@ -93,7 +93,7 @@ namespace Dynamo.TypeScriptCompiler
 
 				    String sourceMap = null;
 
-				    if (Options.GenerateSourceMap)
+				    if (Options.SourceMap)
 				    {
 						sourceMap = File.ReadAllText(outputSourceMapPath);
 						File.Delete(outputSourceMapPath);
@@ -108,7 +108,7 @@ namespace Dynamo.TypeScriptCompiler
 
 		private String GetArguments(String filePath, String outputFolder)
 		{
-			var args = "\"" + filePath + "\" --outDir \"" + outputFolder + "\" --target " + Options.Target;
+			var args = "\"" + filePath + "\" --outDir \"" + outputFolder + "\" --target " + Options.CompilerTarget;
 	
 			if (Options.AllowBool)
 				args += " --allowBool";
@@ -116,7 +116,7 @@ namespace Dynamo.TypeScriptCompiler
 			if (Options.RemoveComments)
 				args += " --removeComments";
 
-			if (Options.GenerateSourceMap)
+			if (Options.SourceMap)
 				args += " --sourcemap";
 
 			return args;
