@@ -125,7 +125,7 @@ namespace Dynamo.TypeScriptCompiler
 		private static String GetExecutablePath()
 		{
 			string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-			string executablePath = Path.Combine(folderPath, "Microsoft SDKs\\TypeScript\\tsc.exe");
+            string executablePath = Path.Combine(folderPath, "Microsoft SDKs\\TypeScript\\0.9\\tsc.exe");
 
 			if (!File.Exists(executablePath))
 			{
