@@ -39,6 +39,8 @@ namespace Dynamo.TypeScriptCompiler
 				// Files need to be saved to the same folder when a sourcemap is genereated (because of the reference to the source)
 				// Easiest way to solve it is to output to either the folder of the target file or copy the target file to the temp folder
 
+				// TODO: 0.9.5 have sourceRoot arg - so this doesnt matter anymore ?
+
 				var newFilePath = Path.Combine(outputFolder, fileName);
 				File.Copy(filePath, newFilePath);
 				filePath = newFilePath;
@@ -47,7 +49,7 @@ namespace Dynamo.TypeScriptCompiler
 			String outputSourcePath = Path.Combine(outputFolder, outputSourceFileName);
 			String outputSourceMapPath = outputSourcePath + ".map";
 
-			var args = GetArguments(filePath, outputFolder);
+			var args = GetArgs(filePath, outputFolder);
 
 			var processStartInfo = new ProcessStartInfo
 			{
@@ -73,8 +75,7 @@ namespace Dynamo.TypeScriptCompiler
 			    }
 
 			    if (Options.SaveToDisk)
-			    {
-				    
+			    {				    
 					var sourceFactory = new Func<String>(() => File.ReadAllText(outputSourcePath));
 				    Func<String> sourceMapFactory = null;
 
@@ -106,20 +107,26 @@ namespace Dynamo.TypeScriptCompiler
 		    }
 		}
 
-		private String GetArguments(String filePath, String outputFolder)
+		private String GetArgs(String filePath, String outputFolder)
 		{
 			var args = "\"" + filePath + "\" --outDir \"" + outputFolder + "\" --target " + Options.Target;
-	
-			if (Options.AllowBool)
-				args += " --allowBool";
 
-			if (Options.RemoveComments)
-				args += " --removeComments";
-
-			if (Options.SourceMap)
-				args += " --sourcemap";
+			args += CreateArgIfTrue(Options.Declaration, "-d");
+			args += CreateArgIfTrue(Options.MapRoot != null, "--mapRoot " + Options.MapRoot);
+			args += CreateArgIfTrue(Options.NoImplicitAny, "--noImplicitAny");
+			args += CreateArgIfTrue(Options.NoResolve, "--noResolve");
+			args += CreateArgIfTrue(Options.RemoveComments, "--removeComments");
+			args += CreateArgIfTrue(Options.SourceMap, "--sourceMap");
+			args += CreateArgIfTrue(Options.SourceRoot != null, "--sourceRoot " + Options.SourceRoot);
 
 			return args;
+		}
+
+		private static String CreateArgIfTrue(Boolean option, String arg)
+		{
+			if (option)
+				return " " + arg;
+			return "";
 		}
 
 		private static String GetExecutablePath()
