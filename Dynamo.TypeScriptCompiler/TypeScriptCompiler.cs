@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
@@ -11,11 +12,15 @@ namespace Dynamo.TypeScriptCompiler
 		private readonly String _executablePath;
 
 		// Constructors
-		public TypeScriptCompiler(TypeScriptCompilerOptions options = null, int timeout = 10000)
+		public TypeScriptCompiler(TypeScriptCompilerOptions options = null, int timeout = 10000, ITypeScriptExecutableResolver tsExecResolver = null)
 		{
 		    Options = options ?? new TypeScriptCompilerOptions();
 			_timeout = timeout;
-            _executablePath = GetExecutablePath();
+
+			if (tsExecResolver == null)
+				tsExecResolver = new TypeScriptExecutableVersionResolver();
+
+            _executablePath = tsExecResolver.GetExecutablePath();	// Should it look up the compiler on every compile instead?
 		}
 
         // Properties
@@ -114,7 +119,7 @@ namespace Dynamo.TypeScriptCompiler
 			args += CreateArgIfTrue(Options.Declaration, "-d");
 			args += CreateArgIfTrue(Options.MapRoot != null, "--mapRoot " + Options.MapRoot);
 			args += CreateArgIfTrue(Options.NoImplicitAny, "--noImplicitAny");
-			args += CreateArgIfTrue(Options.NoResolve, "--noResolve");
+			args += CreateArgIfTrue(Options.NoResolve, "--noResolve");						// TODO: Removed in version 1.0
 			args += CreateArgIfTrue(Options.RemoveComments, "--removeComments");
 			args += CreateArgIfTrue(Options.SourceMap, "--sourceMap");
 			args += CreateArgIfTrue(Options.SourceRoot != null, "--sourceRoot " + Options.SourceRoot);
@@ -127,20 +132,6 @@ namespace Dynamo.TypeScriptCompiler
 			if (option)
 				return " " + arg;
 			return "";
-		}
-
-		private static String GetExecutablePath()
-		{
-			string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            string executablePath = Path.Combine(folderPath, "Microsoft SDKs\\TypeScript\\0.9\\tsc.exe");
-
-			if (!File.Exists(executablePath))
-			{
-                // TODO: What kind of exception to throw? TypeScriptCompilerException? Mention the location it couldnt be found at?
-				throw new Exception("ERROR: The TypeScript compiler couldn't be found. Download http://www.typescriptlang.org/#Download");
-			}
-
-			return executablePath;
 		}
 	}
 }

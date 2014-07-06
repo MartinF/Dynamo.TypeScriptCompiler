@@ -54,6 +54,8 @@
     <Compile Include="PathHelper.cs" />
     <Compile Include="TypeScriptCompilerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TypeScriptExecutableVersionResolverTest.cs" />
+    <Compile Include="TypeScriptExecutableResolverTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dynamo.TypeScriptCompiler\Dynamo.TypeScriptCompiler.csproj">
