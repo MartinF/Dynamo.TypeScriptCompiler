@@ -5,5 +5,9 @@ module Q
 		public bar(): void {
 			alert("bar");
 		}
+
+		public get getter(): string {
+			return "123";
+		}
 	}
 }
