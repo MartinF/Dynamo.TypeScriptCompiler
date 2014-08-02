@@ -26,7 +26,7 @@ namespace Dynamo.TypeScriptCompiler.Tests
 
 			var actualOptStr = options.ToOptionsString();
 
-			var expectedOptStr = "--codepage codepage --declaration --mapRoot mapRoot --module amd --noImplicitAny --out some.js --outDir outDir --removeComments --sourceMap --sourceRoot sourceRoot --mapRoot ES5";
+			var expectedOptStr = "--codepage codepage --declaration --mapRoot mapRoot --module amd --noImplicitAny --out some.js --outDir outDir --removeComments --sourceMap --sourceRoot sourceRoot --target ES5";
 
 			Assert.AreEqual(expectedOptStr, actualOptStr);
 		}

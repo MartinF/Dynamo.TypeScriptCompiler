@@ -90,6 +90,7 @@ namespace Dynamo.TypeScriptCompiler.Tests
 
 			var options = new TypeScriptV1CompilerOptions()
 			{
+				Target = TypeScriptCompilerTarget.ES5
 			};
 
 			var compiler = new TypeScriptCompiler();
@@ -103,7 +104,7 @@ namespace Dynamo.TypeScriptCompiler.Tests
 			var resultSource2 = File.ReadAllText(outFile2);
 
 			var expectedResult1 = "var A;\r\n(function (A) {\r\n    var Foo = (function () {\r\n        function Foo() {\r\n        }\r\n        Foo.prototype.bar = function () {\r\n            alert(\"Foo\");\r\n        };\r\n        return Foo;\r\n    })();\r\n    A.Foo = Foo;\r\n})(A || (A = {}));\r\n";
-			var expectedResult2 = "var Q;\r\n(function (Q) {\r\n    var Bar = (function () {\r\n        function Bar() {\r\n        }\r\n        Bar.prototype.bar = function () {\r\n            alert(\"bar\");\r\n        };\r\n        return Bar;\r\n    })();\r\n    Q.Bar = Bar;\r\n})(Q || (Q = {}));\r\n";
+			var expectedResult2 = "var Q;\r\n(function (Q) {\r\n    var Bar = (function () {\r\n        function Bar() {\r\n        }\r\n        Bar.prototype.bar = function () {\r\n            alert(\"bar\");\r\n        };\r\n\r\n        Object.defineProperty(Bar.prototype, \"getter\", {\r\n            get: function () {\r\n                return \"123\";\r\n            },\r\n            enumerable: true,\r\n            configurable: true\r\n        });\r\n        return Bar;\r\n    })();\r\n    Q.Bar = Bar;\r\n})(Q || (Q = {}));\r\n";
 
 			Assert.AreEqual(expectedResult1, resultSource1);
 			Assert.AreEqual(expectedResult2, resultSource2);

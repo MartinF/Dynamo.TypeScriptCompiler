@@ -79,7 +79,7 @@ namespace Dynamo.TypeScriptCompiler
 			TypeScriptOptionUtility.Add(ref options, RemoveComments, "--removeComments");
 			TypeScriptOptionUtility.Add(ref options, SourceMap, "--sourceMap");
 			TypeScriptOptionUtility.Add(ref options, SourceRoot, "--sourceRoot");
-			TypeScriptOptionUtility.Add(ref options, Target, "--mapRoot");
+			TypeScriptOptionUtility.Add(ref options, Target, "--target");
 
 			return options;
 		}
