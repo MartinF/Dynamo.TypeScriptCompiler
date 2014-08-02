@@ -1,71 +1,68 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
+using System.Linq;
+
+// Remove constructor taking path as string ? or put in File.Exist check ? Then the TypeScriptPathResolver can be removed
 
 namespace Dynamo.TypeScriptCompiler
 {
 	public class TypeScriptCompiler : ITypeScriptCompiler
 	{
-        // Fields
-		private readonly int _timeout;
-		private readonly String _executablePath;
-
 		// Constructors
-		public TypeScriptCompiler(TypeScriptCompilerOptions options = null, int timeout = 10000, ITypeScriptExecutableResolver tsExecResolver = null)
+		public TypeScriptCompiler(String tscExecPath, int timeout = 10000)
 		{
-		    Options = options ?? new TypeScriptCompilerOptions();
-			_timeout = timeout;
+			if (tscExecPath == null)
+				throw new ArgumentNullException("tscExecPath");
 
-			if (tsExecResolver == null)
-				tsExecResolver = new TypeScriptExecutableVersionResolver();
+			TypeScriptCompilerPath = tscExecPath;
+			Timeout = timeout;
+		}
 
-            _executablePath = tsExecResolver.GetExecutablePath();	// Should it look up the compiler on every compile instead?
+		public TypeScriptCompiler(ITypeScriptExecutableResolver tscExecResolver = null, int timeout = 10000)
+			: this(tscExecResolver != null ? tscExecResolver.GetExecutablePath() : new TypeScriptExecutableVersionResolver().GetExecutablePath(), timeout)
+		{
 		}
 
         // Properties
-	    public TypeScriptCompilerOptions Options { get; private set; }
+		public int Timeout { get; private set; }
+		public String TypeScriptCompilerPath { get; private set; }
+
+		public ITypeScriptCompilerResult Compile(IEnumerable<String> files, ITypeScriptOptions options)
+		{
+			if (options == null)
+				throw new ArgumentNullException("options");
+
+			var strOpt = options.ToOptionsString();
+
+			return Compile(files, strOpt);
+		}
 
         // Methods
-		public ITypeScriptCompilerResult Compile(string filePath)
+		public ITypeScriptCompilerResult Compile(IEnumerable<String> files, String options)
 		{
-			if (filePath == null)
-				throw new ArgumentNullException("filePath");
+			if (files == null)
+				throw new ArgumentNullException("files");
+			if (!files.Any())
+				throw new ArgumentException("Files are needed");
 
-			if (!File.Exists(filePath))
-				throw new ArgumentException("File does not exist", "filePath");
+			if (options == null)
+				options = "";
 
-			var fileName = Path.GetFileName(filePath);
-		    var outputSourceFileName = Path.ChangeExtension(fileName, ".js");
-			var outputFolder = Options.SaveToDisk ? Path.GetDirectoryName(filePath) : Path.GetTempPath().TrimEnd(new[] { '\\' });
-			
-			if (Options.SourceMap && !Options.SaveToDisk)
-			{
-				// Files need to be saved to the same folder when a sourcemap is genereated (because of the reference to the source)
-				// Easiest way to solve it is to output to either the folder of the target file or copy the target file to the temp folder
+			var fileArg = String.Join(" ", files);
 
-				// TODO: 0.9.5 have sourceRoot arg - so this doesnt matter anymore ?
-
-				var newFilePath = Path.Combine(outputFolder, fileName);
-				File.Copy(filePath, newFilePath);
-				filePath = newFilePath;
-			}
-
-			String outputSourcePath = Path.Combine(outputFolder, outputSourceFileName);
-			String outputSourceMapPath = outputSourcePath + ".map";
-
-			var args = GetArgs(filePath, outputFolder);
+			var args = fileArg + " " + options;
 
 			var processStartInfo = new ProcessStartInfo
 			{
+				FileName = TypeScriptCompilerPath,
+				Arguments = args,
+
 				WindowStyle = ProcessWindowStyle.Hidden,
 				CreateNoWindow = true,
-				Arguments = args,
-				FileName = _executablePath,
 				UseShellExecute = false,
-				RedirectStandardError = true
+				RedirectStandardError = true,
 			};
-			processStartInfo.EnvironmentVariables.Add("file", filePath);
 
             using (var process = new Process() { StartInfo = processStartInfo })
 		    {
@@ -73,65 +70,14 @@ namespace Dynamo.TypeScriptCompiler
                 process.Start();
 
 				// Wait until compiling has finished
-			    if (!process.WaitForExit(_timeout) || process.ExitCode != 0)
+			    if (!process.WaitForExit(Timeout) || process.ExitCode != 0)
 			    {
 					// Time-out or ExitCode not 0
-					return new TypeScriptCompilerResult(process.ExitCode, error: process.StandardError.ReadToEnd());
+					return new TypeScriptCompilerResult(error: process.StandardError.ReadToEnd() ?? "Error happend when compiling. Reason unknown.");
 			    }
 
-			    if (Options.SaveToDisk)
-			    {				    
-					var sourceFactory = new Func<String>(() => File.ReadAllText(outputSourcePath));
-				    Func<String> sourceMapFactory = null;
-
-				    if (Options.SourceMap)
-						sourceMapFactory = () => File.ReadAllText(outputSourceMapPath);
-				
-				    return new TypeScriptCompilerResult(process.ExitCode, sourceFactory, sourceMapFactory);
-			    }
-			    else
-			    {
-					// Read temporary file
-				    var source = File.ReadAllText(outputSourcePath);
-
-					// Delete temporary file (else it wouldnt be temporary)
-				    File.Delete(outputSourcePath);
-
-				    String sourceMap = null;
-
-				    if (Options.SourceMap)
-				    {
-						sourceMap = File.ReadAllText(outputSourceMapPath);
-						File.Delete(outputSourceMapPath);
-						// Also delete the filePath as it is temporary - needed to fix the reference in the sourcemap
-					    File.Delete(filePath);
-				    }
-
-				    return new TypeScriptCompilerResult(process.ExitCode, source, sourceMap);
-			    }
+			    return new TypeScriptCompilerResult(error: null);
 		    }
-		}
-
-		private String GetArgs(String filePath, String outputFolder)
-		{
-			var args = "\"" + filePath + "\" --outDir \"" + outputFolder + "\" --target " + Options.Target;
-
-			args += CreateArgIfTrue(Options.Declaration, "-d");
-			args += CreateArgIfTrue(Options.MapRoot != null, "--mapRoot " + Options.MapRoot);
-			args += CreateArgIfTrue(Options.NoImplicitAny, "--noImplicitAny");
-			args += CreateArgIfTrue(Options.NoResolve, "--noResolve");						// TODO: Removed in version 1.0
-			args += CreateArgIfTrue(Options.RemoveComments, "--removeComments");
-			args += CreateArgIfTrue(Options.SourceMap, "--sourceMap");
-			args += CreateArgIfTrue(Options.SourceRoot != null, "--sourceRoot " + Options.SourceRoot);
-
-			return args;
-		}
-
-		private static String CreateArgIfTrue(Boolean option, String arg)
-		{
-			if (option)
-				return " " + arg;
-			return "";
 		}
 	}
 }
